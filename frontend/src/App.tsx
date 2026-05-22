@@ -9,9 +9,14 @@ import { SleepsSection } from "@/features/sleeps/SleepsSection";
 import { queryKeys } from "@/shared/queryKeys";
 
 const CHAT_VISIBLE_STORAGE_KEY = "momdiary.chatVisible";
+const CHATENTRY_VISIBLE_STORAGE_KEY = "momdiary.chatEntryVisible";
 
 const ChatPanel = lazy(() =>
   import("@/features/chat/ChatPanel").then((m) => ({ default: m.ChatPanel })),
+);
+
+const ChatEntryPanel = lazy(() =>
+  import("@/features/chatentry/ChatEntryPanel").then((m) => ({ default: m.ChatEntryPanel })),
 );
 
 const SECTION_KEYS = new Set(["feeds", "sleeps", "poops", "appointments"]);
@@ -46,14 +51,26 @@ function AppShell(): JSX.Element {
     const stored = window.localStorage.getItem(CHAT_VISIBLE_STORAGE_KEY);
     return stored === null ? true : stored === "true";
   });
+  const [chatEntryVisible, setChatEntryVisible] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const stored = window.localStorage.getItem(CHATENTRY_VISIBLE_STORAGE_KEY);
+    return stored === null ? false : stored === "true";
+  });
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     window.localStorage.setItem(CHAT_VISIBLE_STORAGE_KEY, String(chatVisible));
   }, [chatVisible]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(CHATENTRY_VISIBLE_STORAGE_KEY, String(chatEntryVisible));
+  }, [chatEntryVisible]);
+
   const hideChat = useCallback(() => setChatVisible(false), []);
   const showChat = useCallback(() => setChatVisible(true), []);
+  const hideChatEntry = useCallback(() => setChatEntryVisible(false), []);
+  const showChatEntry = useCallback(() => setChatEntryVisible(true), []);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-4 p-4 pb-24">
@@ -86,6 +103,28 @@ function AppShell(): JSX.Element {
           className="fixed right-4 bottom-4 z-20 rounded-full bg-slate-900 px-4 py-3 text-sm text-white shadow-lg hover:bg-slate-700"
         >
           💬 Chat
+        </button>
+      )}
+      {chatEntryVisible ? (
+        <div
+          className="fixed bottom-4 left-4 z-20 w-[min(calc(100vw-2rem),26rem)] origin-bottom-left animate-[chatPop_180ms_ease-out]"
+          role="dialog"
+          aria-label="Direct-LLM chat"
+        >
+          <Suspense
+            fallback={<div className="p-4 text-slate-500 text-sm">Loading direct-LLM chat…</div>}
+          >
+            <ChatEntryPanel onHide={hideChatEntry} />
+          </Suspense>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={showChatEntry}
+          aria-label="Show direct-LLM chat"
+          className="fixed bottom-4 left-4 z-20 rounded-full bg-indigo-600 px-4 py-3 text-sm text-white shadow-lg hover:bg-indigo-500"
+        >
+          ⚡ Direct LLM
         </button>
       )}
     </main>

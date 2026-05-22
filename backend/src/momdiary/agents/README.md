@@ -71,3 +71,36 @@ that threads turn history into the agent via MAFAgentRunner.run(..., history=...
 - Failure mode (FR-016): if `store.append` raises, the HTTP response still
   surfaces the normal write outcome and a `session.append_failed` WARN log is
   emitted.
+
+
+## `/v1/chatentry/` direct-LLM endpoint (feature 005)
+
+[`services/chatentry_dispatcher.py`](../services/chatentry_dispatcher.py) and
+[`services/chatentry_catalog.py`](../services/chatentry_catalog.py) implement an
+alternate one-shot dispatch path that bypasses the MAF agent loop and calls the
+LLM directly with a structured `response_format`. The HTTP surface is
+[`api/chatentry.py`](../api/chatentry.py) (`POST /v1/chatentry/`).
+
+- See [spec](../../../../specs/005-direct-llm-chatentry/spec.md),
+  [plan](../../../../specs/005-direct-llm-chatentry/plan.md),
+  [research](../../../../specs/005-direct-llm-chatentry/research.md),
+  and [quickstart](../../../../specs/005-direct-llm-chatentry/quickstart.md).
+- Reuses the same `tools.registry.TOOL_REGISTRY` (single source of truth for
+  argument schemas) and the feature-003 `SessionStore` for history.
+- Tool human-readable descriptions live in
+  [`tools/descriptions.py`](tools/descriptions.py); both `maf_runner` and the
+  direct-LLM dispatcher import from it (FR-009).
+- Pipeline: `resolve_history` -> `build_tool_catalog` -> `assemble_prompt`
+  (oldest-first trim under `momdiary_session_prompt_token_budget`) ->
+  `chat_client.get_response(messages, response_format=...)` ->
+  `parse_llm_decision` -> `_dispatch_tool_call` (commits the per-request
+  session, mirroring `AgentDispatcher.dispatch`).
+- Outcomes: `created` / `updated` / `deleted` / `clarification_requested` /
+  `error`. Error reasons (FR-013): `malformed_llm_output`, `unknown_tool`,
+  `invalid_tool_arguments`, `tool_execution_failed`, `llm_unavailable`,
+  `message_too_large`.
+- Structured log events: `chatentry.received`, `chatentry.dispatch`,
+  `chatentry.decision_invalid`, `chatentry.tool_failed`, `chatentry.completed`.
+- The `/v1/entries` agent path (`AgentDispatcher`) is **unchanged** by this
+  feature (FR-012); both endpoints coexist.
+

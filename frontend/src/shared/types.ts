@@ -159,6 +159,49 @@ export const agentWriteResponseSchema = z.discriminatedUnion("outcome", [
 ]);
 export type AgentWriteResponse = z.infer<typeof agentWriteResponseSchema>;
 
+// ---------- Chat-entry (direct LLM dispatch, feature 005) ----------
+
+export const chatEntryRequestSchema = z.object({
+  message: z.string().min(1).max(8192),
+});
+export type ChatEntryRequest = z.infer<typeof chatEntryRequestSchema>;
+
+const chatEntryOutcomeSchema = z.enum([
+  "created",
+  "updated",
+  "deleted",
+  "clarification_requested",
+  "error",
+]);
+
+const chatEntryErrorReasonSchema = z.enum([
+  "malformed_llm_output",
+  "unknown_tool",
+  "invalid_tool_arguments",
+  "llm_unavailable",
+  "message_too_large",
+  "validation_error",
+]);
+
+const chatEntrySuggestedCandidateSchema = z.object({
+  entry_type: entryTypeSchema,
+  entry_id: z.number().int().positive(),
+  summary: z.string().optional(),
+});
+
+export const chatEntryResponseSchema = z.object({
+  outcome: chatEntryOutcomeSchema,
+  agent_message: z.string(),
+  entry_type: entryTypeSchema.nullable().optional(),
+  entry_id: z.number().int().positive().nullable().optional(),
+  selected_tool: z.string().nullable().optional(),
+  error_reason: chatEntryErrorReasonSchema.nullable().optional(),
+  suggested_candidates: z.array(chatEntrySuggestedCandidateSchema).nullable().optional(),
+  correlation_id: correlationId,
+  session_id: z.string().min(1),
+});
+export type ChatEntryResponse = z.infer<typeof chatEntryResponseSchema>;
+
 // ---------- Errors ----------
 
 export const errorBodySchema = z.object({

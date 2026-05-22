@@ -2,11 +2,14 @@ import {
   type AgentWriteRequest,
   type AgentWriteResponse,
   type AppointmentListResponse,
+  type ChatEntryRequest,
+  type ChatEntryResponse,
   type FeedListResponse,
   type PoopListResponse,
   type SleepListResponse,
   agentWriteResponseSchema,
   appointmentListResponseSchema,
+  chatEntryResponseSchema,
   errorBodySchema,
   feedListResponseSchema,
   poopListResponseSchema,
@@ -144,6 +147,8 @@ export const apiClient = {
     ),
   postEntry: (body: AgentWriteRequest): Promise<AgentWriteResponse> =>
     request(`/v1/entries`, { method: "POST", body: JSON.stringify(body) }, agentWriteResponseSchema),
+  postChatEntry: (body: ChatEntryRequest): Promise<ChatEntryResponse> =>
+    request(`/v1/chatentry/`, { method: "POST", body: JSON.stringify(body) }, chatEntryResponseSchema),
 };
 
 export type ApiClient = typeof apiClient;

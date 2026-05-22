@@ -49,6 +49,19 @@ async def get_agent_runner() -> AgentRunner:  # pragma: no cover - replaced in t
     return MAFAgentRunner()
 
 
+def get_chatentry_chat_client():  # pragma: no cover - replaced in tests
+    """Construct the production direct-LLM chat client (feature 005).
+
+    Tests override this dependency with a deterministic
+    ``FakeChatClient`` via ``app.dependency_overrides`` (Principle II).
+    """
+    from momdiary.services.chatentry_dispatcher import (
+        _build_chatentry_chat_client,
+    )
+
+    return _build_chatentry_chat_client()
+
+
 async def get_dispatcher(
     agent: AgentRunner = Depends(get_agent_runner),
     session: AsyncSession = Depends(get_session),

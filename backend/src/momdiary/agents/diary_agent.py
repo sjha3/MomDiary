@@ -19,8 +19,8 @@ from momdiary.observability.logging import get_logger
 logger = get_logger(__name__)
 
 try:  # pragma: no cover - import guard for environments without MAF installed
-    from agent_framework_azure_ai import AzureOpenAIChatClient  # type: ignore[import-not-found,import-untyped]
-    from agent_framework import Agent  # type: ignore[import-not-found,import-untyped]
+    from agent_framework.azure import AzureOpenAIChatClient  # type: ignore[import-not-found,import-untyped]
+    from agent_framework import ChatAgent as Agent  # type: ignore[import-not-found,import-untyped]
 except Exception:  # noqa: BLE001
     AzureOpenAIChatClient = None  # type: ignore[assignment,misc]
     Agent = None  # type: ignore[assignment,misc]
@@ -217,7 +217,7 @@ def build_agent(tools: list[Any] | None = None) -> AgentBundle:
     if Agent is None:
         raise RuntimeError(
             "agent-framework is not installed. "
-            "Run `pip install --pre agent-framework==1.0.0rc6 agent-framework-azure-ai==1.0.0rc6`."
+            "Run `pip install -e \".[dev]\"` from the backend/ directory."
         )
     client = _build_chat_client()
     tool_list = list(tools) if tools is not None else default_tool_list()

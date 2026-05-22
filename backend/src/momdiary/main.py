@@ -47,14 +47,15 @@ def create_app() -> FastAPI:
 
     # Routers are registered lazily by their respective phases to keep this
     # module a stable composition root.
-    from momdiary.api import appointments, entries, feeds, poops, sleeps
+    from momdiary.api import appointments, chatentry, entries, feeds, poops, sleeps
 
     app.include_router(entries.router, prefix="/v1")
     app.include_router(feeds.router, prefix="/v1")
     app.include_router(sleeps.router, prefix="/v1")
     app.include_router(poops.router, prefix="/v1")
     app.include_router(appointments.router, prefix="/v1")
-    logger.info("app.routers_registered", count=5)
+    app.include_router(chatentry.router, prefix="/v1")
+    logger.info("app.routers_registered", count=6)
     return app
 
 

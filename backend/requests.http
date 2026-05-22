@@ -27,6 +27,7 @@ Content-Type: {{contentType}}
   "message": "Baby drank 120 ml of breast milk at 8am."
 }
 
+
 ### Log a feed in ounces (the agent normalizes to ml)
 POST {{baseUrl}}/v1/entries
 Content-Type: {{contentType}}
@@ -113,6 +114,8 @@ Content-Type: {{contentType}}
   "message": "The 8am feed was actually 150 ml, not 120 ml."
 }
 
+
+
 ### Update with EXPLICIT (entry_id, entry_type) — FR-017 strict path, no resolution
 ### Replace the entry_id with one returned from a previous POST.
 PUT {{baseUrl}}/v1/entries
@@ -183,3 +186,117 @@ Content-Type: {{contentType}}
 {
   "message": ""
 }
+
+
+###############################################################################
+# Feature 005 — Direct-LLM one-shot dispatch (POST /v1/chatentry/)
+#
+# Alternate path to /v1/entries: skips the Microsoft Agent Framework runner
+# and asks the chat client directly, in a single turn, to emit a structured
+# `tool_call` or `ask_for_clarification` decision. Same tool registry, same
+# session store, same DB. Pass `X-Session-ID` to thread history across turns.
+###############################################################################
+
+### Create — log a feed via direct-LLM dispatch
+# @name chatentryLogFeed
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Baby drank 120 ml of milk at 9am."
+}
+
+### Create — log a sleep
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Baby napped from 1pm to 2:30pm."
+}
+
+### Create — log a poop with consistency
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Soft poop around 10am."
+}
+
+### Create — log an appointment
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Pediatrician appointment on May 25 at 9am."
+}
+
+### Thread chat history via X-Session-ID (echo the value the server returned)
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+X-Session-ID: 00000000-0000-0000-0000-000000000000
+
+{
+  "message": "Actually that feed was 150 ml."
+}
+
+### Provide client-side history inline (used when no session id resolves)
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Add a note: ask about shots.",
+  "history": [
+    {
+      "role": "caregiver",
+      "text": "Pediatrician appointment on May 25 at 9am."
+    },
+    {
+      "role": "assistant",
+      "text": "Logged appointment on May 25 at 9:00 AM.",
+      "outcome": "created",
+      "entry_type": "appointment",
+      "entry_id": 1
+    }
+  ]
+}
+
+### Update — natural-language correction
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "The 8am feed was actually 150 ml, not 120 ml."
+}
+
+### Delete — natural-language removal
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Delete the 8am feed."
+}
+
+### Clarification — ambiguous input, no entry persisted (outcome=clarification_requested)
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Baby ate some formula."
+}
+
+### Error — empty message (422 validation)
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": ""
+}
+
+### Error — request body too large (400 message_too_large; pad >8192 chars in real use)
+POST {{baseUrl}}/v1/chatentry/
+Content-Type: {{contentType}}
+
+{
+  "message": "Baby ate something. (pretend this string is >8192 chars in real use)"
+}
+

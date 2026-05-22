@@ -202,6 +202,18 @@ Every `/v1/entries` response sets `X-Session-ID`. The client must echo it back
 on the next request to keep the LLM's short-term chat history coherent. The
 session store is in-memory and bounded by `MOMDIARY_SESSION_*` settings.
 
+### Alternate one-shot endpoint: `/v1/chatentry/`
+
+`POST /v1/chatentry/` is a thinner sibling of `/v1/entries` introduced by
+[feature 005](specs/005-direct-llm-chatentry/quickstart.md). It bypasses the
+Microsoft Agent Framework runner and instead asks the chat client directly,
+in a single turn, to emit a structured-output JSON decision (`tool_call` or
+`ask_for_clarification`) which the backend then dispatches against the same
+tool registry used by `/v1/entries`. Use it when you want a leaner request
+path without the agent loop. The existing `/v1/entries` endpoint is
+**unchanged** and remains the default chat write path; both endpoints share
+the same database, tool implementations, and session-store semantics.
+
 ---
 
 ## Frontend integration
