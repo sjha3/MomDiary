@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChatMessageList } from "./ChatMessageList";
 import { useChatContext } from "./ChatContext";
+import { kvStorage } from "@/shared/kvStorage";
+import { useSpeechRecognition } from "@/shared/speech";
 interface ChatPanelProps {
   onHide?: () => void;
   /**
@@ -13,243 +15,9 @@ interface ChatPanelProps {
 }
 
 // -----------------------------------------------------------------------------
-// Inline `useSpeechRecognition` — thin wrapper around the browser-native Web
-// Speech API (Chrome / Edge / Safari). Firefox does not implement it; callers
-// should gate UI on `supported`.
-// -----------------------------------------------------------------------------
-
-type SRResult = { isFinal: boolean; 0: { transcript: string } };
-interface SRResultList {
-  length: number;
-  [index: number]: SRResult;
-}
-interface SREvent {
-  resultIndex: number;
-  results: SRResultList;
-}
-interface SRErrorEvent {
-  error: string;
-}
-interface SRInstance {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult: ((e: SREvent) => void) | null;
-  onerror: ((e: SRErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-}
-type SRConstructor = new () => SRInstance;
-
-function getSRCtor(): SRConstructor | null {
-  if (typeof window === "undefined") return null;
-  const w = window as unknown as {
-    SpeechRecognition?: SRConstructor;
-    webkitSpeechRecognition?: SRConstructor;
-  };
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
-}
-
-interface UseSpeechRecognitionOptions {
-  onTranscript: (text: string, isFinal: boolean) => void;
-  onFinal?: (text: string) => void;
-  lang?: string;
-  /**
-   * How long the recognizer must hear silence (no new interim/final results)
-   * before it commits and auto-submits. Users routinely pause mid-sentence,
-   * so this should be generous — default 1800ms.
-   */
-  silenceMs?: number;
-}
-
-function useSpeechRecognition(opts: UseSpeechRecognitionOptions) {
-  const { onTranscript, onFinal, lang, silenceMs = 1800 } = opts;
-  const [listening, setListening] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const recRef = useRef<SRInstance | null>(null);
-  const onTranscriptRef = useRef(onTranscript);
-  const onFinalRef = useRef(onFinal);
-  useEffect(() => {
-    onTranscriptRef.current = onTranscript;
-  }, [onTranscript]);
-  useEffect(() => {
-    onFinalRef.current = onFinal;
-  }, [onFinal]);
-
-  // Cross-restart session state. `start()` resets these; `onend` auto-restart
-  // preserves them so the running transcript survives a browser-induced gap.
-  const finalAccumRef = useRef("");
-  const lastInterimRef = useRef("");
-  const silenceTimerRef = useRef<number | null>(null);
-  const manualStopRef = useRef(false);
-  const committedRef = useRef(false);
-
-  const Ctor = getSRCtor();
-  const supported = Ctor !== null;
-
-  const clearSilence = () => {
-    if (silenceTimerRef.current != null) {
-      window.clearTimeout(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  };
-
-  // Fire the final transcript exactly once and stop the recognizer.
-  const commit = useCallback(() => {
-    if (committedRef.current) return;
-    clearSilence();
-    committedRef.current = true;
-    manualStopRef.current = true;
-    const text = (finalAccumRef.current + lastInterimRef.current).trim();
-    const rec = recRef.current;
-    if (rec) {
-      try {
-        rec.stop();
-      } catch {
-        // ignore
-      }
-    }
-    if (text && onFinalRef.current) onFinalRef.current(text);
-  }, []);
-
-  // Cancel without submitting (user tapped the cancel pill).
-  const stop = useCallback(() => {
-    clearSilence();
-    committedRef.current = true; // suppress any pending final
-    manualStopRef.current = true;
-    const rec = recRef.current;
-    if (rec) {
-      try {
-        rec.stop();
-      } catch {
-        // ignore
-      }
-    }
-  }, []);
-
-  // Creates a fresh recognizer instance and wires its handlers. Used both for
-  // a brand-new session (`start`) and to seamlessly resume after a browser
-  // auto-end mid-utterance. Resetting of session state happens in `start()`.
-  const createAndStart = useCallback(() => {
-    if (!Ctor) return;
-    let rec: SRInstance;
-    try {
-      rec = new Ctor();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Recognition unavailable");
-      return;
-    }
-    rec.lang = lang ?? (typeof navigator !== "undefined" ? navigator.language : "en-US");
-    rec.interimResults = true;
-    // Continuous mode lets the user pause between words without the engine
-    // finalising the utterance the moment they stop talking.
-    rec.continuous = true;
-
-    rec.onresult = (e) => {
-      let interim = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const r = e.results[i];
-        if (!r) continue;
-        const t = r[0]?.transcript ?? "";
-        if (r.isFinal) finalAccumRef.current += t;
-        else interim += t;
-      }
-      lastInterimRef.current = interim;
-      const combined = (finalAccumRef.current + interim).trim();
-      if (combined) onTranscriptRef.current(combined, false);
-      // Any speech activity resets the silence countdown.
-      clearSilence();
-      silenceTimerRef.current = window.setTimeout(() => {
-        commit();
-      }, silenceMs);
-    };
-    rec.onerror = (e) => {
-      // "no-speech" is benign — the silence timer will eventually commit (or
-      // the user will cancel). Surface anything else.
-      if (e.error && e.error !== "no-speech" && e.error !== "aborted") {
-        setError(e.error);
-      }
-    };
-    rec.onend = () => {
-      recRef.current = null;
-      if (!manualStopRef.current && !committedRef.current) {
-        // Browser auto-ended mid-session (Chrome does this even with
-        // continuous=true after a few seconds of silence). Resume so the
-        // user's pause doesn't terminate dictation.
-        try {
-          createAndStartRef.current();
-          return;
-        } catch {
-          // fall through to a graceful close
-        }
-      }
-      clearSilence();
-      setListening(false);
-      if (!committedRef.current) {
-        committedRef.current = true;
-        const text = (finalAccumRef.current + lastInterimRef.current).trim();
-        if (text && onFinalRef.current) onFinalRef.current(text);
-      }
-    };
-
-    try {
-      rec.start();
-      recRef.current = rec;
-      setError(null);
-      setListening(true);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not start mic");
-    }
-  }, [Ctor, lang, silenceMs, commit]);
-
-  const createAndStartRef = useRef(createAndStart);
-  useEffect(() => {
-    createAndStartRef.current = createAndStart;
-  }, [createAndStart]);
-
-  const start = useCallback(() => {
-    if (!Ctor) return;
-    // Fresh session — wipe accumulated transcript and flags.
-    finalAccumRef.current = "";
-    lastInterimRef.current = "";
-    manualStopRef.current = false;
-    committedRef.current = false;
-    clearSilence();
-    if (recRef.current) {
-      try {
-        recRef.current.abort();
-      } catch {
-        // ignore
-      }
-      recRef.current = null;
-    }
-    createAndStart();
-  }, [Ctor, createAndStart]);
-
-  const toggle = useCallback(() => {
-    if (listening) stop();
-    else start();
-  }, [listening, start, stop]);
-
-  useEffect(() => {
-    return () => {
-      clearSilence();
-      const rec = recRef.current;
-      if (rec) {
-        try {
-          rec.abort();
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, []);
-
-  return { supported, listening, error, start, stop, toggle };
-}
-
+// `useSpeechRecognition` lives in `@/shared/speech` so the native Capacitor
+// build can swap it for `@capacitor-community/speech-recognition` without
+// touching this component.
 // -----------------------------------------------------------------------------
 
 export function ChatPanel({ onHide, voiceOnly = false }: ChatPanelProps = {}): JSX.Element {
@@ -264,13 +32,11 @@ export function ChatPanel({ onHide, voiceOnly = false }: ChatPanelProps = {}): J
   // ("Diary") or voice-ask research questions, and the UI's research
   // disclaimer + API endpoint pick up the choice in either tab.
   const [mode, setMode] = useState<ChatMode>(() => {
-    if (typeof window === "undefined") return "diary";
-    const stored = window.localStorage.getItem("momdiary.chatMode");
+    const stored = kvStorage.get("momdiary.chatMode");
     return stored === "research" || stored === "diary" ? stored : "diary";
   });
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem("momdiary.chatMode", mode);
+    kvStorage.set("momdiary.chatMode", mode);
   }, [mode]);
   const modeCfg = MODE_CONFIG[mode];
 

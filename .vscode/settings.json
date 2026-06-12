@@ -29,7 +29,8 @@
         "git checkout": true,
         "D:\\Azure`": true,
         ".\\.venv\\Scripts\\python.exe": true,
-        "npx vitest": true
+        "npx vitest": true,
+        "npx cap": true
     }
 }
 

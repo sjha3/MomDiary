@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!--
+      Note: a strict Content-Security-Policy belongs at the edge (App Service /
+      Static Web Apps response headers), not as a meta tag. The full allowlist
+      depends on Clerk's runtime origins (js.clerk.com, clerk.services,
+      Cloudflare Turnstile, etc.) plus any analytics, and must be tested end-
+      to-end against the prod auth flow. Tracked for Phase 4 of the mobile +
+      App Service plan.
+    -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="theme-color" content="#f97316" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MomDiary" />
     <title>MomDiary</title>
   </head>
   <body>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { setActiveBabyId } from "@/shared/apiClient";
+import { confirm } from "@/shared/dialogs";
 import type { Baby } from "@/shared/types";
 import {
   useBabies,
@@ -88,8 +89,8 @@ function ManageBabiesPanel(props: {
     );
   };
 
-  const onDelete = (id: number) => {
-    if (!window.confirm("Delete this baby? Diary entries remain but are inaccessible.")) {
+  const onDelete = async (id: number) => {
+    if (!(await confirm("Delete this baby? Diary entries remain but are inaccessible."))) {
       return;
     }
     del.mutate(id, {

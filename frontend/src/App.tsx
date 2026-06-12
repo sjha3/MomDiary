@@ -7,11 +7,13 @@ import {
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { SignInPage } from "@/features/auth/SignInPage";
-import { SignUpPage } from "@/features/auth/SignUpPage";
+import { SignUpPage } from "@/features/auth/SignupPage";
 import { VerifyEmailBanner } from "@/features/auth/VerifyEmailBanner";
 import { useLogoutMutation, useSession, useTimezoneSync } from "@/features/auth/useSession";
 import { onUnauthorized } from "@/shared/apiClient";
+import { kvStorage } from "@/shared/kvStorage";
 import { BabySwitcher } from "@/features/babies/BabySwitcher";
+import { OfflineBanner } from "@/features/network/OfflineBanner";
 import { FirstBabyPrompt } from "@/features/babies/FirstBabyPrompt";
 import { ChatProvider } from "@/features/chat/ChatContext";
 import { SelectedDateProvider } from "@/features/date/useSelectedDate";
@@ -51,9 +53,7 @@ function AppShell(props: {
   user: import("@/shared/types").CurrentUser;
 }): JSX.Element {
   const [chatVisible, setChatVisible] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    const stored = window.localStorage.getItem(CHAT_VISIBLE_STORAGE_KEY);
-    return stored === "true";
+    return kvStorage.get(CHAT_VISIBLE_STORAGE_KEY) === "true";
   });
   const [chatVoiceOnly, setChatVoiceOnly] = useState(false);
 
@@ -67,8 +67,7 @@ function AppShell(props: {
   >("home");
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(CHAT_VISIBLE_STORAGE_KEY, String(chatVisible));
+    kvStorage.set(CHAT_VISIBLE_STORAGE_KEY, String(chatVisible));
   }, [chatVisible]);
 
   useEffect(() => {
@@ -201,24 +200,27 @@ function UnauthorizedRedirector(): null {
 
 export default function App(): JSX.Element {
   return (
-    <Routes>
-      <Route path="/sign-in/*" element={<SignInPage />} />
-      <Route path="/sign-up/*" element={<SignUpPage />} />
-      <Route
-        path="/*"
-        element={
-          <>
-            <UnauthorizedRedirector />
-            <SignedIn>
-              <SignedInShell />
-            </SignedIn>
-            <SignedOut>
-              <RedirectToSignIn />
-            </SignedOut>
-          </>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <OfflineBanner />
+      <Routes>
+        <Route path="/sign-in/*" element={<SignInPage />} />
+        <Route path="/sign-up/*" element={<SignUpPage />} />
+        <Route
+          path="/*"
+          element={
+            <>
+              <UnauthorizedRedirector />
+              <SignedIn>
+                <SignedInShell />
+              </SignedIn>
+              <SignedOut>
+                <RedirectToSignIn />
+              </SignedOut>
+            </>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }

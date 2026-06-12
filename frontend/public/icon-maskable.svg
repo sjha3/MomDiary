@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Maskable variant: keeps the heart inside the 80% safe zone so platform
+       launcher masks don't crop the eyes/smile. -->
+  <rect width="512" height="512" fill="#fffaf5"/>
+  <path d="M256 388c-9 0-18-4-24-10l-87-87c-25-25-25-65 0-90s65-25 90 0l21 22 22-22c25-25 65-25 90 0s25 65 0 90l-88 87c-6 6-15 10-24 10z" fill="#f97316"/>
+  <circle cx="216" cy="220" r="10" fill="#fffaf5"/>
+  <circle cx="296" cy="220" r="10" fill="#fffaf5"/>
+  <path d="M232 256c8 9 16 9 24 9s16 0 24-9" stroke="#fffaf5" stroke-width="8" stroke-linecap="round" fill="none"/>
+</svg>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MomDiary</string>
+    <string name="title_activity_main">MomDiary</string>
+    <string name="package_name">com.momdiary.app</string>
+    <string name="custom_url_scheme">com.momdiary.app</string>
+</resources>

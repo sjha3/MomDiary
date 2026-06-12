@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Placeholder MomDiary icon. Generate real PNG/maskable variants in Phase 1
+       with `npx capacitor-assets generate` from the chosen palette. -->
+  <rect width="512" height="512" rx="96" fill="#fffaf5"/>
+  <path d="M256 416c-12 0-23-5-31-13L112 290c-32-32-32-83 0-115s83-32 115 0l29 29 29-29c32-32 83-32 115 0s32 83 0 115L287 403c-8 8-19 13-31 13z" fill="#f97316"/>
+  <circle cx="200" cy="232" r="14" fill="#fffaf5"/>
+  <circle cx="312" cy="232" r="14" fill="#fffaf5"/>
+  <path d="M218 280c12 12 30 12 42 0" stroke="#fffaf5" stroke-width="10" stroke-linecap="round" fill="none"/>
+</svg>

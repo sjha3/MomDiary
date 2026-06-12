@@ -3,6 +3,31 @@ dist
 coverage
 .env.local
 .env.*.local
+.env.mobile
 playwright-report
 test-results
 .vite
+
+# Capacitor native build outputs (commit the project sources, ignore the
+# generated/compiled artifacts).
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/app/release/
+android/local.properties
+android/captures/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+ios/App/App/public/
+ios/App/App/capacitor.config.json
+ios/App/App/config.xml
+ios/App/Pods/
+ios/App/build/
+ios/App/Podfile.lock
+ios/DerivedData/
+ios/.xcode.env.local
+*.xcuserstate
+xcuserdata/
+

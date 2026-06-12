@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient, ApiError } from "@/shared/apiClient";
+import { confirm } from "@/shared/dialogs";
 import { EntryActions } from "@/shared/EntryActions";
 import { queryKeys } from "@/shared/queryKeys";
 import {
@@ -36,8 +37,8 @@ export function SleepItem({ entry, date }: SleepItemProps): JSX.Element {
 
   const busy = updateMut.isPending || deleteMut.isPending;
 
-  function handleDelete() {
-    if (window.confirm("Delete this sleep entry?")) deleteMut.mutate();
+  async function handleDelete() {
+    if (await confirm("Delete this sleep entry?")) deleteMut.mutate();
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

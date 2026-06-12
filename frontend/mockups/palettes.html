@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MomDiary — Palette Preview</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* System font stack matches tailwind.config.ts */
+  html { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  /* A single component swatch, themed via CSS variables so we don't have to
+     duplicate the markup five times in different Tailwind classes. */
+  .swatch { --bg: #fff; --text: #0f172a; --muted: #64748b; --primary-50: #fff7ed; --primary-500: #f97316; --primary-700: #c2410c; --primary-100: #ffedd5; --primary-200: #fed7aa; --feed: #f97316; --sleep: #6366f1; --poop: #ca8a04; --appt: #10b981; --feed-50: #fff7ed; --sleep-50: #eef2ff; --poop-50: #fefce8; --appt-50: #ecfdf5; }
+  .swatch { background: var(--bg); color: var(--text); }
+  .bubble-assistant { background: #ffffff; box-shadow: 0 1px 0 rgba(0,0,0,.04); border: 1px solid var(--primary-100); color: var(--text); }
+  .bubble-caregiver { background: var(--primary-500); color: white; }
+  .avatar { background: var(--primary-50); border: 1px solid var(--primary-200); color: var(--primary-700); }
+  .btn-primary { background: var(--primary-500); color: white; }
+  .btn-primary:hover { background: var(--primary-700); }
+  .src-link { color: var(--primary-700); text-decoration: underline; text-decoration-color: var(--primary-200); text-underline-offset: 2px; }
+  .disclaimer { color: var(--muted); border-top: 1px solid var(--primary-100); }
+  .src-label { color: var(--muted); letter-spacing: .08em; }
+  .tile-feed { background: var(--feed-50); color: var(--feed); }
+  .tile-sleep { background: var(--sleep-50); color: var(--sleep); }
+  .tile-poop  { background: var(--poop-50);  color: var(--poop); }
+  .tile-appt  { background: var(--appt-50);  color: var(--appt); }
+  .dot-feed { background: var(--feed); }
+  .dot-sleep { background: var(--sleep); }
+  .dot-poop  { background: var(--poop); }
+  .dot-appt  { background: var(--appt); }
+
+  /* --- Palette overrides --- */
+
+  /* 0. Current (Tailwind defaults baked into the app today) */
+  .palette-current {
+    --bg: #fffaf5; --text: #1c1917; --muted: #78716c;
+    --primary-50: #fff7ed; --primary-100: #ffedd5; --primary-200: #fed7aa; --primary-500: #f97316; --primary-700: #c2410c;
+    --feed: #f97316; --feed-50: #fff7ed;
+    --sleep: #6366f1; --sleep-50: #eef2ff;
+    --poop: #ca8a04; --poop-50: #fefce8;
+    --appt: #10b981; --appt-50: #ecfdf5;
+  }
+  /* 1. Soft Peach & Cream */
+  .palette-peach {
+    --bg: #fffaf5; --text: #3a2a1f; --muted: #8a7563;
+    --primary-50: #fff5ec; --primary-100: #ffe3d1; --primary-200: #ffc5a3; --primary-500: #ff8a5b; --primary-700: #c14d28;
+    --feed: #ff8a5b; --feed-50: #fff5ec;
+    --sleep: #7c8cf8; --sleep-50: #eef2ff;
+    --poop: #d4a93c; --poop-50: #fef9e7;
+    --appt: #3fb98c; --appt-50: #ecfdf5;
+  }
+  /* 2. Nordic Nursery */
+  .palette-nordic {
+    --bg: #f7f4ef; --text: #2d2a26; --muted: #6b6259;
+    --primary-50: #fff4ee; --primary-100: #ffe3d3; --primary-200: #fcc6ab; --primary-500: #f08a6c; --primary-700: #b85839;
+    --feed: #f08a6c; --feed-50: #fff4ee;
+    --sleep: #6b8db0; --sleep-50: #eef3f8;
+    --poop: #b89968; --poop-50: #faf7f0;
+    --appt: #7aa089; --appt-50: #f0f6f1;
+  }
+  /* 3. Mint & Coral */
+  .palette-mint {
+    --bg: #fffefb; --text: #1f2933; --muted: #607080;
+    --primary-50: #ffeeec; --primary-100: #ffd6d2; --primary-200: #ffb2ab; --primary-500: #ff6b6b; --primary-700: #c23838;
+    --feed: #ff6b6b; --feed-50: #ffeeec;
+    --sleep: #26a69a; --sleep-50: #e6f4f1;
+    --poop: #ffc857; --poop-50: #fff7d6;
+    --appt: #5b8def; --appt-50: #e8f1ff;
+  }
+  /* 4. Lavender & Sand */
+  .palette-lavender {
+    --bg: #faf6f0; --text: #2a2438; --muted: #6f6a7c;
+    --primary-50: #f1edfb; --primary-100: #e1d8f6; --primary-200: #c4b3ec; --primary-500: #9b87d6; --primary-700: #5b48a4;
+    --feed: #e8855a; --feed-50: #fff1ea;
+    --sleep: #9b87d6; --sleep-50: #f1edfb;
+    --poop: #c9a866; --poop-50: #faf4e6;
+    --appt: #5ab489; --appt-50: #e9f7ef;
+  }
+  /* 5. Slate & Sunshine */
+  .palette-slate {
+    --bg: #f8fafc; --text: #0f172a; --muted: #475569;
+    --primary-50: #fff8e1; --primary-100: #ffeeb0; --primary-200: #ffd97a; --primary-500: #ffb627; --primary-700: #b87800;
+    --feed: #ffb627; --feed-50: #fff8e1;
+    --sleep: #64748b; --sleep-50: #eef1f6;
+    --poop: #a08760; --poop-50: #f3ede0;
+    --appt: #0ea5e9; --appt-50: #e0f2fe;
+  }
+</style>
+</head>
+<body class="bg-slate-100 p-6">
+
+<div class="mx-auto max-w-7xl">
+  <header class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-900">MomDiary — Palette Preview</h1>
+    <p class="text-sm text-slate-600 mt-1">
+      Each card shows the same components (assistant + caregiver bubble, category tiles,
+      primary button, research sources block) re-themed for that palette, plus a phone-sized
+      Home page mockup on the right. Open this file in a browser:
+      <code class="rounded bg-slate-200 px-1.5 py-0.5 text-xs">frontend/mockups/palettes.html</code>.
+    </p>
+    <div class="mt-3 flex gap-2 text-xs">
+      <a href="#palette-current" class="rounded bg-white px-2 py-1 ring-1 ring-slate-200 hover:bg-slate-50">0. Current</a>
+      <a href="#palette-peach" class="rounded bg-white px-2 py-1 ring-1 ring-slate-200 hover:bg-slate-50">1. Peach</a>
+      <a href="#palette-nordic" class="rounded bg-white px-2 py-1 ring-1 ring-slate-200 hover:bg-slate-50">2. Nordic</a>
+      <a href="#palette-mint" class="rounded bg-white px-2 py-1 ring-1 ring-slate-200 hover:bg-slate-50">3. Mint</a>
+      <a href="#palette-lavender" class="rounded bg-white px-2 py-1 ring-1 ring-slate-200 hover:bg-slate-50">4. Lavender</a>
+      <a href="#palette-slate" class="rounded bg-white px-2 py-1 ring-1 ring-slate-200 hover:bg-slate-50">5. Slate</a>
+    </div>
+  </header>
+
+  <div class="flex flex-col gap-8">
+
+    <!-- Each row = one palette: chat-components card (left) + home phone (right). -->
+    <section id="palette-current" class="swatch palette-current rounded-2xl p-5 shadow-sm ring-1 ring-slate-200">
+      <PaletteHeader name="0. Current (orange-500)"></PaletteHeader>
+      <div class="palette-row"></div>
+    </section>
+    <section id="palette-peach" class="swatch palette-peach rounded-2xl p-5 shadow-sm ring-1 ring-slate-200">
+      <PaletteHeader name="1. Soft Peach & Cream"></PaletteHeader>
+      <div class="palette-row"></div>
+    </section>
+    <section id="palette-nordic" class="swatch palette-nordic rounded-2xl p-5 shadow-sm ring-1 ring-slate-200">
+      <PaletteHeader name="2. Nordic Nursery"></PaletteHeader>
+      <div class="palette-row"></div>
+    </section>
+    <section id="palette-mint" class="swatch palette-mint rounded-2xl p-5 shadow-sm ring-1 ring-slate-200">
+      <PaletteHeader name="3. Mint & Coral"></PaletteHeader>
+      <div class="palette-row"></div>
+    </section>
+    <section id="palette-lavender" class="swatch palette-lavender rounded-2xl p-5 shadow-sm ring-1 ring-slate-200">
+      <PaletteHeader name="4. Lavender & Sand"></PaletteHeader>
+      <div class="palette-row"></div>
+    </section>
+    <section id="palette-slate" class="swatch palette-slate rounded-2xl p-5 shadow-sm ring-1 ring-slate-200">
+      <PaletteHeader name="5. Slate & Sunshine"></PaletteHeader>
+      <div class="palette-row"></div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ===================================================================
+     Reusable mockup template, injected into every .palette-row
+     so the markup is authored once.
+     =================================================================== -->
+<template id="palette-card-template">
+  <!-- Category tiles -->
+  <div class="grid grid-cols-4 gap-2 mb-5">
+    <div class="tile-feed flex flex-col items-center justify-center rounded-xl py-3">
+      <span class="dot-feed h-2 w-2 rounded-full mb-1"></span>
+      <span class="text-[11px] font-medium">Feed</span>
+    </div>
+    <div class="tile-sleep flex flex-col items-center justify-center rounded-xl py-3">
+      <span class="dot-sleep h-2 w-2 rounded-full mb-1"></span>
+      <span class="text-[11px] font-medium">Sleep</span>
+    </div>
+    <div class="tile-poop flex flex-col items-center justify-center rounded-xl py-3">
+      <span class="dot-poop h-2 w-2 rounded-full mb-1"></span>
+      <span class="text-[11px] font-medium">Diaper</span>
+    </div>
+    <div class="tile-appt flex flex-col items-center justify-center rounded-xl py-3">
+      <span class="dot-appt h-2 w-2 rounded-full mb-1"></span>
+      <span class="text-[11px] font-medium">Appt</span>
+    </div>
+  </div>
+
+  <!-- Caregiver bubble (right-aligned) -->
+  <div class="flex justify-end mb-2">
+    <div class="bubble-caregiver max-w-[78%] rounded-2xl rounded-br-md px-3 py-2 text-sm shadow-sm">
+      When can babies start solids?
+    </div>
+  </div>
+
+  <!-- Assistant bubble (left-aligned, with research formatting) -->
+  <div class="flex items-end gap-2 mb-4">
+    <span class="avatar grid h-7 w-7 shrink-0 place-items-center rounded-full">
+      <!-- sparkle -->
+      <svg viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" aria-hidden="true">
+        <path d="M12 2l1.7 4.3L18 8l-4.3 1.7L12 14l-1.7-4.3L6 8l4.3-1.7L12 2z"></path>
+        <path d="M19 14l.8 1.9L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-1.1L19 14z"></path>
+      </svg>
+    </span>
+    <div class="max-w-[92%]">
+      <div class="bubble-assistant rounded-2xl rounded-bl-md px-3 py-2 text-sm">
+        <div class="flex flex-col gap-2">
+          <p class="leading-snug">
+            Most pediatric guidelines recommend introducing <strong class="font-semibold">solid foods around 6 months of age</strong>, once the baby shows readiness cues.
+          </p>
+          <p class="leading-snug">Signs of readiness include:</p>
+          <ul class="list-disc space-y-1 pl-5 leading-snug">
+            <li>Good head and neck control</li>
+            <li>Sitting upright with minimal support</li>
+            <li>Showing interest in food and reaching for it</li>
+          </ul>
+
+          <div class="mt-1 flex flex-col gap-1">
+            <p class="src-label text-[11px] font-medium uppercase">Sources</p>
+            <ol class="flex flex-col gap-1">
+              <li class="flex items-baseline gap-2 text-xs">
+                <span class="shrink-0 src-label">1.</span>
+                <a href="#" class="src-link line-clamp-2">Starting Solid Foods <span class="ml-1 text-[10px] opacity-70">(aap.org)</span></a>
+              </li>
+              <li class="flex items-baseline gap-2 text-xs">
+                <span class="shrink-0 src-label">2.</span>
+                <a href="#" class="src-link line-clamp-2">When, What, and How to Introduce Solid Foods <span class="ml-1 text-[10px] opacity-70">(cdc.gov)</span></a>
+              </li>
+            </ol>
+          </div>
+
+          <p class="disclaimer pt-2 text-[11px] italic leading-snug">
+            This is general information, not medical advice. Always consult your pediatrician for medical decisions about your baby.
+          </p>
+        </div>
+      </div>
+      <time class="mt-1 block px-1 text-[10px] opacity-60">8:42 AM</time>
+    </div>
+  </div>
+
+  <!-- Composer + primary button -->
+  <div class="flex items-center gap-2">
+    <input
+      class="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm placeholder-slate-400 focus:outline-none focus:ring-2"
+      style="--tw-ring-color: var(--primary-500);"
+      placeholder="Ask a question or log an entry..."
+    />
+    <button class="btn-primary rounded-xl px-4 py-2 text-sm font-medium shadow-sm transition-colors">
+      Send
+    </button>
+  </div>
+</template>
+
+<!-- ===================================================================
+     Home-page phone mockup. Mirrors HomePage.tsx layout:
+     header → stats card → quick-log grid → recent logs → bottom tab bar.
+     =================================================================== -->
+<template id="home-mockup-template">
+  <div class="phone-frame mx-auto w-[320px] rounded-[36px] p-2 ring-1 ring-slate-300 shadow-md" style="background: #1f2937;">
+    <div class="phone-screen relative flex h-[640px] flex-col overflow-hidden rounded-[28px]" style="background: var(--bg);">
+      <!-- status bar -->
+      <div class="flex items-center justify-between px-5 pt-3 pb-1 text-[10px]" style="color: var(--text);">
+        <span class="font-medium">9:41</span>
+        <span class="flex items-center gap-1">
+          <span class="h-1.5 w-1.5 rounded-full" style="background: currentColor"></span>
+          <span class="h-1.5 w-1.5 rounded-full" style="background: currentColor"></span>
+          <span>100%</span>
+        </span>
+      </div>
+
+      <!-- scrollable content -->
+      <div class="flex-1 overflow-hidden px-4 pb-20 pt-3">
+        <!-- header -->
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex flex-col">
+            <span class="text-xs opacity-60" style="color: var(--text);">Good morning</span>
+            <h3 class="text-xl font-bold leading-tight" style="color: var(--text);">
+              Baby <span style="color: var(--primary-700);">Aria</span>
+            </h3>
+          </div>
+          <button class="grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm ring-1" style="color: var(--text); --tw-ring-color: var(--primary-100);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-5 w-5">
+              <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 0 0-5-5.9V4a1 1 0 1 0-2 0v1.1A6 6 0 0 0 6 11v3.2c0 .5-.2 1-.6 1.4L4 17h5"/>
+              <path d="M9 17a3 3 0 0 0 6 0"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- stats card -->
+        <section class="mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-white p-3 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+          <div class="flex flex-col items-center text-center">
+            <span class="text-[9px] uppercase tracking-wide opacity-50" style="color: var(--text);">Last feed</span>
+            <span class="mt-1 text-sm font-semibold" style="color: var(--text);">2h ago</span>
+            <span class="text-[10px] opacity-60" style="color: var(--text);">120ml · BM</span>
+          </div>
+          <div class="flex flex-col items-center border-x border-slate-100 text-center">
+            <span class="text-[9px] uppercase tracking-wide opacity-50" style="color: var(--text);">Sleep today</span>
+            <span class="mt-1 text-sm font-semibold" style="color: var(--text);">3h 40m</span>
+            <span class="text-[10px] opacity-60" style="color: var(--text);">2 naps</span>
+          </div>
+          <div class="flex flex-col items-center text-center">
+            <span class="text-[9px] uppercase tracking-wide opacity-50" style="color: var(--text);">Next appt</span>
+            <span class="mt-1 text-sm font-semibold" style="color: var(--text);">Tue</span>
+            <span class="text-[10px] opacity-60" style="color: var(--text);">10:30 AM</span>
+          </div>
+        </section>
+
+        <!-- quick log -->
+        <h4 class="mt-4 mb-2 text-xs font-medium opacity-70" style="color: var(--text);">Quick log</h4>
+        <div class="grid grid-cols-4 gap-2">
+          <button class="flex flex-col items-center gap-1 rounded-2xl bg-white p-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-feed grid h-9 w-9 place-items-center rounded-full text-xs font-bold">F</span>
+            <span class="text-[10px] font-medium" style="color: var(--text);">Feed</span>
+          </button>
+          <button class="flex flex-col items-center gap-1 rounded-2xl bg-white p-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-sleep grid h-9 w-9 place-items-center rounded-full text-xs font-bold">S</span>
+            <span class="text-[10px] font-medium" style="color: var(--text);">Sleep</span>
+          </button>
+          <button class="flex flex-col items-center gap-1 rounded-2xl bg-white p-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-poop grid h-9 w-9 place-items-center rounded-full text-xs font-bold">P</span>
+            <span class="text-[10px] font-medium" style="color: var(--text);">Poop</span>
+          </button>
+          <button class="flex flex-col items-center gap-1 rounded-2xl bg-white p-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-appt grid h-9 w-9 place-items-center rounded-full text-xs font-bold">A</span>
+            <span class="text-[10px] font-medium" style="color: var(--text);">Appt</span>
+          </button>
+        </div>
+
+        <!-- recent logs -->
+        <h4 class="mt-4 mb-2 text-xs font-medium opacity-70" style="color: var(--text);">Recent logs</h4>
+        <ul class="flex flex-col gap-1.5">
+          <li class="flex items-center gap-2 rounded-2xl bg-white px-2.5 py-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-feed grid h-8 w-8 shrink-0 place-items-center rounded-full text-[10px] font-bold">F</span>
+            <div class="flex min-w-0 flex-1 flex-col">
+              <span class="text-xs font-medium" style="color: var(--text);">Bottle feed</span>
+              <span class="truncate text-[10px] opacity-60" style="color: var(--text);">120ml · BM</span>
+            </div>
+            <span class="text-[10px] opacity-50" style="color: var(--text);">07:30</span>
+          </li>
+          <li class="flex items-center gap-2 rounded-2xl bg-white px-2.5 py-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-sleep grid h-8 w-8 shrink-0 place-items-center rounded-full text-[10px] font-bold">S</span>
+            <div class="flex min-w-0 flex-1 flex-col">
+              <span class="text-xs font-medium" style="color: var(--text);">Sleep</span>
+              <span class="truncate text-[10px] opacity-60" style="color: var(--text);">1h 20m</span>
+            </div>
+            <span class="text-[10px] opacity-50" style="color: var(--text);">06:00</span>
+          </li>
+          <li class="flex items-center gap-2 rounded-2xl bg-white px-2.5 py-2 shadow-sm ring-1" style="--tw-ring-color: var(--primary-100);">
+            <span class="tile-poop grid h-8 w-8 shrink-0 place-items-center rounded-full text-[10px] font-bold">P</span>
+            <div class="flex min-w-0 flex-1 flex-col">
+              <span class="text-xs font-medium" style="color: var(--text);">Poop</span>
+              <span class="truncate text-[10px] opacity-60" style="color: var(--text);">Soft</span>
+            </div>
+            <span class="text-[10px] opacity-50" style="color: var(--text);">05:45</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- bottom tab bar -->
+      <nav class="absolute bottom-3 left-1/2 flex w-[88%] -translate-x-1/2 items-center justify-between rounded-full bg-white px-2 py-1.5 shadow-lg ring-1" style="--tw-ring-color: var(--primary-100);">
+        <button class="flex flex-col items-center gap-0.5 rounded-full px-2.5 py-1" style="background: var(--primary-50); color: var(--primary-700);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M3 12l9-9 9 9"/><path d="M5 10v10h14V10"/></svg>
+          <span class="text-[9px] font-medium">Home</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2.5 py-1 opacity-60" style="color: var(--text);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>
+          <span class="text-[9px]">Insights</span>
+        </button>
+        <button class="-mt-5 grid h-12 w-12 place-items-center rounded-full shadow-lg btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-6 w-6"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8v.5z"/></svg>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2.5 py-1 opacity-60" style="color: var(--text);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><path d="M12 1v22M8 6h4a3 3 0 0 1 0 6h-4a3 3 0 0 0 0 6h4"/></svg>
+          <span class="text-[9px]">Voice</span>
+        </button>
+        <button class="flex flex-col items-center gap-0.5 px-2.5 py-1 opacity-60" style="color: var(--text);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-4 w-4"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          <span class="text-[9px]">Profile</span>
+        </button>
+      </nav>
+    </div>
+  </div>
+</template>
+
+<template id="palette-header-template">
+  <header class="mb-4 flex items-baseline justify-between gap-3 border-b border-current/10 pb-3">
+    <h2 class="text-sm font-semibold tracking-tight" data-name>Palette</h2>
+    <div class="flex gap-1.5">
+      <span class="h-4 w-4 rounded-full" style="background: var(--primary-500)" title="primary"></span>
+      <span class="h-4 w-4 rounded-full" style="background: var(--feed)" title="feed"></span>
+      <span class="h-4 w-4 rounded-full" style="background: var(--sleep)" title="sleep"></span>
+      <span class="h-4 w-4 rounded-full" style="background: var(--poop)" title="poop"></span>
+      <span class="h-4 w-4 rounded-full" style="background: var(--appt)" title="appt"></span>
+    </div>
+  </header>
+</template>
+
+<script>
+  // Replace the <PaletteHeader> tags + .palette-row stubs with real markup
+  // from the templates above. Keeps the per-palette markup DRY.
+  const cardTpl = document.getElementById("palette-card-template");
+  const homeTpl = document.getElementById("home-mockup-template");
+  const headerTpl = document.getElementById("palette-header-template");
+
+  for (const placeholder of document.querySelectorAll("PaletteHeader")) {
+    const node = headerTpl.content.cloneNode(true);
+    node.querySelector("[data-name]").textContent = placeholder.getAttribute("name");
+    placeholder.replaceWith(node);
+  }
+  for (const placeholder of document.querySelectorAll(".palette-row")) {
+    // Build a 2-column layout: left = chat components card, right = phone mockup
+    const row = document.createElement("div");
+    row.className = "grid grid-cols-1 gap-6 lg:grid-cols-[1fr_auto] lg:items-start";
+
+    const left = document.createElement("div");
+    left.appendChild(cardTpl.content.cloneNode(true));
+
+    const right = document.createElement("div");
+    right.appendChild(homeTpl.content.cloneNode(true));
+
+    row.appendChild(left);
+    row.appendChild(right);
+    placeholder.replaceWith(row);
+  }
+</script>
+
+</body>
+</html>

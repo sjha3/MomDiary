@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient, ApiError } from "@/shared/apiClient";
+import { confirm } from "@/shared/dialogs";
 import { EntryActions } from "@/shared/EntryActions";
 import { queryKeys } from "@/shared/queryKeys";
 import {
@@ -39,8 +40,8 @@ export function AppointmentItem({ entry, date }: AppointmentItemProps): JSX.Elem
 
   const busy = updateMut.isPending || deleteMut.isPending;
 
-  function handleDelete() {
-    if (window.confirm("Delete this appointment?")) deleteMut.mutate();
+  async function handleDelete() {
+    if (await confirm("Delete this appointment?")) deleteMut.mutate();
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

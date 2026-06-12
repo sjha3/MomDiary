@@ -65,7 +65,19 @@ export class ApiError extends Error {
 
 function getBaseUrl(): string {
   const fromEnv = import.meta.env?.VITE_API_BASE_URL;
-  return (fromEnv ?? "http://localhost:8000").replace(/\/$/, "");
+  if (fromEnv && fromEnv.length > 0) {
+    return fromEnv.replace(/\/$/, "");
+  }
+  // Hard fail in production builds — silently defaulting to localhost is the
+  // #1 source of "the app loads but nothing works" deployments. In dev mode
+  // (vite dev / vitest) localhost is the expected backend.
+  if (import.meta.env?.PROD) {
+    throw new Error(
+      "VITE_API_BASE_URL is not set. Production builds must point at a real backend " +
+        "(e.g. https://api.momdiary.example). Set it in .env.production or the build environment.",
+    );
+  }
+  return "http://localhost:8000";
 }
 
 function newCorrelationId(): string {
