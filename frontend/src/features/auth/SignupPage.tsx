@@ -1,5 +1,6 @@
-import { SignUp, useSignUp } from "@clerk/clerk-react";
+import { SignUp, useAuth, useSignUp } from "@clerk/clerk-react";
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { startNativeOAuthSignUp } from "@/shared/nativeOAuth";
 import { isNativePlatform } from "@/shared/platform";
 
@@ -11,6 +12,10 @@ import { isNativePlatform } from "@/shared/platform";
  * to `/` where the `SignedIn` gate mounts the shell — but writes are still
  * blocked by `<VerifyEmailBanner>` until the verification claim flips true.
  *
+ * On native (Capacitor) the `afterSignUpUrl` handoff is unreliable; we
+ * additionally watch `useAuth().isSignedIn` and short-circuit to `/` as
+ * soon as Clerk reports a live session. Same pattern as `SignInPage`.
+ *
  * On Capacitor (native) we hide Clerk's built-in social buttons (Google
  * blocks OAuth inside embedded WebViews with "disallowed_useragent") and
  * render our own button row that goes through `@capacitor/browser` + a
@@ -18,6 +23,12 @@ import { isNativePlatform } from "@/shared/platform";
  */
 export function SignUpPage(): JSX.Element {
   const native = isNativePlatform();
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (isLoaded && isSignedIn) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-amber-50 p-4">
       {native ? <NativeOAuthRow /> : null}

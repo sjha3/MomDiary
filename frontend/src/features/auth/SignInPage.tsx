@@ -1,5 +1,6 @@
-import { SignIn, useSignIn } from "@clerk/clerk-react";
+import { SignIn, useAuth, useSignIn } from "@clerk/clerk-react";
 import { useState } from "react";
+import { Navigate } from "react-router-dom";
 import { startNativeOAuthSignIn } from "@/shared/nativeOAuth";
 import { isNativePlatform } from "@/shared/platform";
 
@@ -10,6 +11,12 @@ import { isNativePlatform } from "@/shared/platform";
  * verification, factor selection, social callbacks). After sign-in we land
  * back on `/` where `<SignedIn>` reveals the app shell.
  *
+ * On native (Capacitor) the `afterSignInUrl` handoff is unreliable — the
+ * widget occasionally hangs on its "Signing in…" loader after a successful
+ * session is created. To bullet-proof this, we additionally watch
+ * `useAuth().isSignedIn` and short-circuit to `/` as soon as Clerk reports
+ * a live session, regardless of what the widget thinks.
+ *
  * On Capacitor (native) we hide Clerk's built-in social buttons — they
  * navigate the embedded WebView to Google, which Google refuses with
  * "disallowed_useragent". A custom button row above the widget instead
@@ -18,6 +25,14 @@ import { isNativePlatform } from "@/shared/platform";
  */
 export function SignInPage(): JSX.Element {
   const native = isNativePlatform();
+  const { isLoaded, isSignedIn } = useAuth();
+
+  // Safety net: when Clerk reports a live session but the widget hasn't
+  // navigated us off /sign-in/*, force the redirect ourselves.
+  if (isLoaded && isSignedIn) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-amber-50 p-4">
       {native ? <NativeOAuthRow /> : null}
